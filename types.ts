@@ -1,13 +1,19 @@
+
 export type Point = { x: number; y: number };
 export type Vector = { x: number; y: number };
 
 export enum GameState {
   MENU,
   CHARACTER_SELECT,
+  OPPONENT_SELECT, // pick the enemy team
+  STAGE_SELECT,
   PLAYING,
   PAUSED,
-  GAME_OVER
+  GAME_OVER,
+  VICTORY
 }
+
+export type GameMode = 'ARCADE' | 'SHOOTOUT';
 
 export enum PowerupType {
   HEAL = 'HEAL',
@@ -33,17 +39,22 @@ export interface Player extends Entity {
   powerupTime: number;
   activePowerup: PowerupType | null;
   characterId: string; // Added to track selected character
+  
+  // BLAZIN MECHANIC
+  blazinMeter: number; // 0 to 100
+  isBlazin: boolean;
+  blazinTimer: number;
 }
 
 export interface Enemy extends Entity {
   hp: number;
   maxHp: number; // Added maxHp for boss bar
   speed: number;
-  type: 'basic' | 'fast' | 'tank' | 'boss';
-  bossVariant?: 'camel' | '2pac' | 'biggie' | 'postmalone' | 'slimshady' | 'lilwayne'; 
+  type: 'basic' | 'fast' | 'tank' | 'boss' | 'rival';
+  bossVariant?: string; // Generalized to string to accept any character key
   value: number;
   hitFlashTimer: number; // For visual feedback
-  attackCooldown?: number; // For boss
+  attackCooldown?: number; // For boss/rival
 }
 
 export interface Bullet extends Entity {
@@ -51,6 +62,7 @@ export interface Bullet extends Entity {
   damage: number;
   lifeTime: number;
   isEnemy: boolean;
+  spriteKey?: string; // Supports unique bullet visuals per character
 }
 
 export interface Particle extends Entity {

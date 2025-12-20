@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GORE LOKA PUNJABI</title>
+    <title>DKAY VENDETTA</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Teko:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
       body {
         background-color: #000000;
         overflow: hidden; /* Prevent scrolling when using arrow keys */
-        font-family: 'Black Ops One', system-ui;
+        font-family: 'Teko', sans-serif;
         touch-action: none; /* Critical for mobile game controls */
       }
       canvas {
@@ -18,7 +20,18 @@
       }
       /* Custom scrollbar hide if needed */
       ::-webkit-scrollbar {
-        display: none;
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #111;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #ca8a04; /* Yellow-600 */
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #eab308; /* Yellow-500 */
       }
     </style>
 <script type="importmap">
