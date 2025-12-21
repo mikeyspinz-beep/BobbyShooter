@@ -4,6 +4,8 @@ export const CANVAS_WIDTH = 1280;
 export const CANVAS_HEIGHT = 720;
 export const GROUND_HEIGHT = 120; // Increased for parallax dunes
 
+export const SAVE_VERSION = '1.1'; // Current data schema version
+
 export const GAME_CONFIG = {
   PLAYER_MAX_HP: 100,
   PLAYER_SPEED: 6,

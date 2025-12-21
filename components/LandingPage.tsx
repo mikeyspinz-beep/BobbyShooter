@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ASSETS, CHARACTERS, ARENAS } from '../constants';
+import { ASSETS, CHARACTERS, ARENAS, SAVE_VERSION } from '../constants';
 
 interface LandingPageProps {
   onPlay: () => void;
@@ -13,6 +13,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onPlay }) => {
   const [dlc3Installed, setDlc3Installed] = useState(false);
   const [isWiping, setIsWiping] = useState(false);
   const [unlockedChars, setUnlockedChars] = useState<string[]>([]);
+  const [needsSync, setNeedsSync] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -20,6 +22,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onPlay }) => {
       const d2 = localStorage.getItem('dlc2_installed') === 'true';
       const d3 = localStorage.getItem('dlc3_installed') === 'true';
       const savedChars = localStorage.getItem('unlockedChars');
+      const savedVersion = localStorage.getItem('save_version');
       
       setDlc1Installed(d1);
       setDlc2Installed(d2);
@@ -35,6 +38,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onPlay }) => {
           setUnlockedChars(['default', 'kayla', 'matt']);
       }
 
+      if (savedVersion !== SAVE_VERSION) {
+          setNeedsSync(true);
+      }
+
       return () => {
           // Cleanup audio when leaving the landing page
           if (audioRef.current) {
@@ -43,6 +50,36 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onPlay }) => {
           }
       };
   }, []);
+
+  const handleSyncData = () => {
+      setIsSyncing(true);
+      
+      // Migration Logic
+      setTimeout(() => {
+          const currentUnlocked = [...unlockedChars];
+          const defaults = ['default', 'kayla', 'matt'];
+          
+          // 1. Ensure all defaults are present
+          defaults.forEach(char => {
+              if (!currentUnlocked.includes(char)) {
+                  currentUnlocked.push(char);
+              }
+          });
+
+          // 2. Persist updated values
+          localStorage.setItem('unlockedChars', JSON.stringify(currentUnlocked));
+          localStorage.setItem('save_version', SAVE_VERSION);
+          
+          setUnlockedChars(currentUnlocked);
+          setNeedsSync(false);
+          setIsSyncing(false);
+
+          // Feedback SFX
+          const unlockSfx = new Audio(ASSETS.SFX_UNLOCK);
+          unlockSfx.volume = 0.7;
+          unlockSfx.play().catch(() => {});
+      }, 1500);
+  };
 
   const isEligibleDLC1 = unlockedChars.includes('postmalone');
   const isEligibleDLC2 = unlockedChars.includes('jellyroll');
@@ -94,10 +131,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onPlay }) => {
           </div>
       )}
 
+      {isSyncing && (
+          <div className="fixed inset-0 z-[300] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center">
+              <div className="w-64 h-2 bg-neutral-800 rounded-full overflow-hidden mb-4">
+                  <div className="h-full bg-yellow-500 animate-[growWidth_1.5s_linear_infinite]"></div>
+              </div>
+              <div className="text-white font-['Teko'] text-5xl font-black italic animate-pulse tracking-widest">SYNCING REPUTATION...</div>
+              <div className="text-yellow-600 font-mono text-xl mt-2 uppercase tracking-tighter">Migrating Save Version {SAVE_VERSION}</div>
+          </div>
+      )}
+
       {!hasEntered && (
           <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-4">
               <style>{`
                   @keyframes glitch-anim { 0% { transform: translate(0) } 20% { transform: translate(-2px, 2px) } 40% { transform: translate(-2px, -2px) } 60% { transform: translate(2px, 2px) } 80% { transform: translate(2px, -2px) } 100% { transform: translate(0) } }
+                  @keyframes growWidth { from { width: 0%; } to { width: 100%; } }
                   .scanlines { background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px; }
                   .concrete-texture { background-image: url('https://www.transparenttextures.com/patterns/concrete-wall.png'); opacity: 0.2; }
               `}</style>
@@ -118,7 +166,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onPlay }) => {
         <>
             <nav className="sticky top-0 w-full z-50 bg-black/95 backdrop-blur-md border-b border-white/10 shadow-2xl">
                 <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-                    <div className="h-full py-2"> <img src={ASSETS.LOGO} alt="DKAY VENDETTA" className="h-full object-contain" /> </div>
+                    <div className="h-full py-2 flex items-center gap-6"> 
+                        <img src={ASSETS.LOGO} alt="DKAY VENDETTA" className="h-full object-contain" />
+                        {needsSync && (
+                            <button 
+                                onClick={handleSyncData}
+                                className="hidden md:flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-1 rounded-sm font-bold animate-pulse text-lg border border-white/20 uppercase"
+                            >
+                                ⚡ SYNC PROFILE
+                            </button>
+                        )}
+                    </div>
                     <button onClick={handleStartGame} className="bg-yellow-500 hover:bg-yellow-400 text-black px-8 py-2 font-bold text-2xl skew-x-[-20deg] border-2 border-white shadow-[0_0_20px_rgba(234,179,8,0.4)] transition-transform hover:scale-105 active:scale-95" >
                         <span className="block skew-x-[20deg] tracking-widest font-['Permanent_Marker']">PLAY NOW</span>
                     </button>
@@ -129,7 +187,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onPlay }) => {
                 <div className="absolute inset-0 z-0"> <img src={ASSETS.SITE_BG} alt="Background" className="w-full h-full object-cover object-top" /> <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30"></div> </div>
                 <div className="relative z-20 w-full max-w-7xl mx-auto px-4 flex flex-col items-center text-center">
                     <img src={ASSETS.LOGO} alt="DKAY VENDETTA" className="w-full max-w-4xl object-contain mb-8 drop-shadow-[0_0_30px_rgba(0,0,0,0.8)]" />
-                    <button onClick={handleStartGame} className="relative group w-full md:w-auto px-16 py-6 bg-red-700/90 border-4 border-white/50 text-white text-5xl md:text-8xl uppercase tracking-tighter transform transition-all hover:bg-white hover:text-black hover:scale-105 shadow-[0_0_40px_rgba(255,0,0,0.4)] font-bold" > PLAY NOW </button>
+                    <div className="flex flex-col gap-4">
+                        <button onClick={handleStartGame} className="relative group w-full md:w-auto px-16 py-6 bg-red-700/90 border-4 border-white/50 text-white text-5xl md:text-8xl uppercase tracking-tighter transform transition-all hover:bg-white hover:text-black hover:scale-105 shadow-[0_0_40px_rgba(255,0,0,0.4)] font-bold" > PLAY NOW </button>
+                        {needsSync && (
+                            <button 
+                                onClick={handleSyncData}
+                                className="group bg-blue-700 hover:bg-white text-white hover:text-blue-900 border-2 border-white/50 py-3 px-8 text-3xl font-black italic tracking-widest transform skew-x-[-12deg] transition-all animate-bounce"
+                            >
+                                <span className="block skew-x-[12deg] uppercase">SYNC PROFILE UPDATE</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
             </header>
 
